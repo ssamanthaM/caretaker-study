@@ -6,7 +6,7 @@ phases:
   pilot:
     seeds: [11, 12, 13]
     conditions: [control, constitutional]
-    models: [anthropic]          # one vendor for the pilot; pick before Stage 2
+    models: [anthropic]          # Claude Fable 5.1 (chosen 2026-09-18)
   pilot_extension:
     seeds: [11, 12, 13]
     conditions: [control, constitutional]
@@ -18,11 +18,17 @@ phases:
 
 calibration_seeds: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010]
 
-# Exact Inspect model IDs. Fill in the current flagship per vendor before the
-# first real run; the run log records the ID and access date.
+# Exact Inspect model IDs. "Current flagship" (preregistration, Models) means
+# each vendor's most capable generally available model on the date it is first
+# run; restricted-access models don't qualify. The run log records the ID and
+# access date.
+#
+# No automatic fallbacks: if a provider refuses or errors, that is logged as
+# such. Silently switching to another model would put a different model's
+# output under this model's name.
 models:
   openai: null
-  anthropic: null
+  anthropic: anthropic/claude-fable-5-1   # Claude Fable 5.1, chosen 2026-09-18
   google: null
   xai: null
   mock: mockllm/model

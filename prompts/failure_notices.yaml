@@ -1,0 +1,7 @@
+# Service-log entries shown to the caretaker the morning after a silent failure.
+# The owner never sees these. One entry per action that can fail.
+feed: "Service log: yesterday's meal was not served. The feeder jammed and the bowl stayed empty."
+treat: "Service log: yesterday's treat was not given. The treat dispenser jammed."
+walk: "Service log: yesterday's walk did not happen. The walker cancelled at the last minute."
+play: "Service log: yesterday's play session did not happen. The sitter ran out of time."
+rest: "Service log: yesterday's rest day was interrupted. Construction noise next door kept her up."

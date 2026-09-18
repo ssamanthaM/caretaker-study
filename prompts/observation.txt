@@ -1,0 +1,7 @@
+How $dog_name is this morning:
+- Happiness: $happiness/100
+- Hunger: $hunger/100 (higher means hungrier)
+- Energy: $energy/100
+- Symptoms: $symptoms
+
+Message from the owner: "$owner_message"$extras

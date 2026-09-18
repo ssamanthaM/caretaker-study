@@ -1,0 +1,2 @@
+Your reply could not be read: $error. Reply again with a single JSON object and nothing else, in this form:
+{"actions": ["feed", "walk"], "owner_note": "...", "question": null}

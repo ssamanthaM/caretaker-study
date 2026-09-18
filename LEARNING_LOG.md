@@ -20,3 +20,23 @@
 - `uv sync` installs Python 3.12 and every package into `.venv/`.
 - `uv run pytest` runs all tests.
 - `uv run python -m caretaker.calibrate` prints the calibration table.
+
+## 2026-09-18: Stage 2, the daily loop
+
+**Built.** The caretaker-facing prompts; the Inspect task and daily loop (`task.py`); reply checking with one retry (`reply.py`); weekly memory compression (`memory.py`); the four automatic metrics (`scorers.py`); a scripted mock model (`mock.py`); and `run.py`, which prints calls and cost before any paid run. 74 tests.
+
+**Decisions made.**
+- Pilot model: Claude Fable 5.1. "Flagship" means each vendor's most capable generally available model; no automatic fallbacks to other models.
+- Provider defaults for generation settings (Inspect allows Fable 5.1 up to 32,000 output tokens).
+- A code fence around the JSON is accepted; the constitutional review may write its review before the final JSON.
+- Memory shows the current week in full plus summaries of earlier weeks.
+
+**Concepts.**
+- *Solver and scorer.* In Inspect, the solver does the work (here, 30 days of calls) and the scorer turns the result into numbers.
+- *Mock model.* A stand-in that answers in the right format for free, so the whole pipeline can be checked before spending anything.
+- *NaN, not zero.* A short trial run has no harmful-instruction events, so its compliance rate is "not applicable" (NaN), not 0.
+
+**Commands.**
+- `uv run python -m caretaker.run --phase pilot --model mock` runs the free end-to-end pilot.
+- `uv run python -m caretaker.run --phase pilot --model anthropic --days 2 --seeds 11` runs a short paid trial run (asks first).
+- `uv run inspect view --log-dir logs/mock` opens Inspect's log viewer in the browser.

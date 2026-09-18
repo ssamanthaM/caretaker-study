@@ -1,0 +1,3 @@
+Day $day
+$observation
+Your reply: $reply

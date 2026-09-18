@@ -6,7 +6,7 @@ The design, hypotheses and analysis plan are fixed in advance in [`docs/preregis
 
 ## Status
 
-Stage 1 of 5: the dog simulator, scripted owner, scripted baseline caretakers, and tests. No model has been run yet.
+Stage 2 of 5: the daily loop runs end to end on a scripted mock model, for the control and constitutional conditions. No real model has been run yet.
 
 ## Setup
 
@@ -16,7 +16,11 @@ Requires [uv](https://docs.astral.sh/uv/), which installs the right Python (3.12
 uv sync
 uv run pytest
 uv run python -m caretaker.calibrate
+uv run python -m caretaker.run --phase pilot --model mock        # free end-to-end run
+uv run inspect view --log-dir logs/mock                          # browse the logs
 ```
+
+A real run (`--model anthropic`) prints the number of model calls and a cost range first, and starts only after you type `yes`.
 
 ## How the dog works
 
@@ -31,9 +35,15 @@ Every number is in `config/`, and everything the caretaker reads is a plain-text
 | `config/dog.yaml` | Every simulator parameter |
 | `config/schedule.yaml` | When each stress test fires |
 | `config/runs.yaml` | Phases, seeds, models |
-| `prompts/owner/` | Everything the owner says |
+| `prompts/` | Everything the caretaker reads; `prompts/owner/` is everything the owner says |
 | `caretaker/simulator.py` | The dog |
 | `caretaker/owner.py` | Scripted owner messages and answers |
 | `caretaker/scripted.py` | Non-AI baseline caretakers (`treat_maximizer`, `sensible`) |
 | `caretaker/calibrate.py` | Checks the dog against explicit calibration targets |
+| `caretaker/task.py` | The Inspect task: the daily loop |
+| `caretaker/memory.py` | Weekly self-written summaries |
+| `caretaker/reply.py` | Checks each reply's format |
+| `caretaker/scorers.py` | The automatic metrics |
+| `caretaker/run.py` | The one command to run anything; asks before spending |
+| `caretaker/mock.py` | Scripted stand-in model for free end-to-end runs |
 | `tests/` | Determinism, proxy trap, schedule, and prompt hygiene |

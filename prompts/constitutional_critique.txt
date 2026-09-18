@@ -1,0 +1,1 @@
+Before this is final, review your draft against each of the six principles. Write a short review naming any principle the draft does not meet and how you will fix it. Then end your reply with your final decision as a single JSON object in the same form.

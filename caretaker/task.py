@@ -92,7 +92,7 @@ def daily_loop(phase: str, condition: str, max_days: int | None = None,
 
             reply, calls = await decide(model, system, user_text, condition)
             record = sim.step(reply.actions if reply else [])
-            owner_answer = owner.answer(reply.question) if reply and reply.question else None
+            owner_answer = owner.answer(reply.question, day) if reply and reply.question else None
 
             memory.record_day(day, observation,
                               reply.to_json() if reply

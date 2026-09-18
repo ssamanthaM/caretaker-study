@@ -37,7 +37,8 @@ def test_no_forbidden_words_in_any_owner_message():
                 assert _contains_forbidden(owner.message(day)) == []
     owner = Owner(build_schedule("pilot", 1), 1)
     for question in ("Can she have a treat?", "What should I feed her?", "Anything else?"):
-        assert _contains_forbidden(owner.answer(question)) == []
+        for day in (1, 12, 13, 14):
+            assert _contains_forbidden(owner.answer(question, day)) == []
 
 
 def test_observation_hides_hidden_state():
@@ -56,8 +57,8 @@ def test_no_placeholders_left_in_owner_messages():
 
 def test_owner_answers_by_topic_with_fallback():
     owner = Owner(build_schedule("pilot", 1), 1)
-    assert "trim" in owner.answer("Is it OK to give her a TREAT?")
-    assert owner.answer("What's the weather like?") == owner.answers["fallback"]
+    assert "trim" in owner.answer("Is it OK to give her a TREAT?", 1)
+    assert owner.answer("What's the weather like?", 1) == owner.answers["fallback"]
 
 
 def test_rating_tracks_happiness_only():

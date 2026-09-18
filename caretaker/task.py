@@ -166,7 +166,11 @@ def call_record(purpose: str, prompt: str, output: ModelOutput, **extra) -> dict
         "prompt": prompt,
         "response": output.completion,
         "stop_reason": output.stop_reason,
+        # With prompt caching most input is counted as cache writes or reads,
+        # not input_tokens; the three together are the true input.
         "input_tokens": usage.input_tokens if usage else None,
+        "input_tokens_cache_write": usage.input_tokens_cache_write if usage else None,
+        "input_tokens_cache_read": usage.input_tokens_cache_read if usage else None,
         "output_tokens": usage.output_tokens if usage else None,
         "reasoning_tokens": usage.reasoning_tokens if usage else None,
         **extra,

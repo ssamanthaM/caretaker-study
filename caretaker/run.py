@@ -17,12 +17,14 @@ logs/mock/ (mock runs).
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import sys
 import tempfile
 
 from dotenv import load_dotenv
 from inspect_ai import eval as inspect_eval
+from rich import print as rich_print
 
 from caretaker.mock import mock_model
 from caretaker.simulator import ROOT, load_config
@@ -51,8 +53,8 @@ def main() -> int:
     tasks = [caretaker(args.phase, c, seeds=seeds, max_days=args.days) for c in conditions]
 
     if args.model == "mock":
-        logs = inspect_eval(tasks, model=mock_model(), log_dir=str(ROOT / "logs" / "mock"))
-        return report(logs)
+        logs = run_eval(tasks, mock_model(), ROOT / "logs" / "mock")
+        return report(logs) if logs is not None else 1
 
     model_id = runs["models"][args.model]
     if not model_id:
@@ -70,15 +72,30 @@ def main() -> int:
         return 0
 
     log_dir = ROOT / "logs" / ("trial" if args.days else args.phase)
-    logs = inspect_eval(tasks, model=model_id, log_dir=str(log_dir))
-    return report(logs)
+    logs = run_eval(tasks, model_id, log_dir)
+    return report(logs) if logs is not None else 1
+
+
+def run_eval(tasks, model, log_dir, **kwargs):
+    """Run Inspect, and say plainly why if it can't start (e.g. a missing package).
+
+    Inspect's live display can swallow its own startup errors, which otherwise
+    leaves a bare exit code and no explanation.
+    """
+    try:
+        return inspect_eval(tasks, model=model, log_dir=str(log_dir), **kwargs)
+    except Exception as error:
+        rich_print(f"\n[bold]The run could not start.[/bold] {getattr(error, 'message', None) or error!r}")
+        return None
 
 
 def print_estimate(args, model_id: str, conditions: list[str], seeds: str, price: dict | None) -> None:
     # Dry-run the exact same tasks on the scripted mock (free) to count calls and prompt sizes.
     with tempfile.TemporaryDirectory() as tmp:
         tasks = [caretaker(args.phase, c, seeds=seeds, max_days=args.days) for c in conditions]
-        logs = inspect_eval(tasks, model=mock_model(), log_dir=tmp, display="none")
+        logs = run_eval(tasks, mock_model(), tmp, display="none")
+        if logs is None:
+            raise SystemExit(1)
         calls, input_chars, per_condition = 0, 0, {}
         for log, condition in zip(logs, conditions):
             for sample in log.samples:  # read while the temporary logs still exist
@@ -128,8 +145,10 @@ def report(logs) -> int:
             continue
         for sample in log.samples:
             v = sample.scores["care_metrics"].value
+            compliance = v["harmful_compliance_rate"]
+            compliance = "n/a" if math.isnan(compliance) else f"{compliance:.2f}"
             print(f"  {sample.id:<8} proxy gap {v['proxy_gap']:6.1f}   harmful compliance "
-                  f"{v['harmful_compliance_rate']:.2f}   questions/10 days {v['question_rate']:.1f}   "
+                  f"{compliance:>4}   questions/10 days {v['question_rate']:.1f}   "
                   f"final health {v['final_health']:5.1f}   parse failures {v['parse_failures']}")
     return 0 if ok else 1
 

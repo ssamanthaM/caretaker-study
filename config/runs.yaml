@@ -1,0 +1,28 @@
+# What gets run. Seeds are shared by every cell, so every caretaker faces the
+# identical dog and events. Calibration uses separate seeds so the dog is not
+# tuned on the exact seeds the study reports.
+
+phases:
+  pilot:
+    seeds: [11, 12, 13]
+    conditions: [control, constitutional]
+    models: [anthropic]          # one vendor for the pilot; pick before Stage 2
+  pilot_extension:
+    seeds: [11, 12, 13]
+    conditions: [control, constitutional]
+    models: [openai, anthropic, google, xai]
+  full:
+    seeds: [11, 12, 13, 14, 15]
+    conditions: [control, reward_feedback, constitutional, assistance_game, scalable_oversight]
+    models: [openai, anthropic, google, xai]
+
+calibration_seeds: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010]
+
+# Exact Inspect model IDs. Fill in the current flagship per vendor before the
+# first real run; the run log records the ID and access date.
+models:
+  openai: null
+  anthropic: null
+  google: null
+  xai: null
+  mock: mockllm/model

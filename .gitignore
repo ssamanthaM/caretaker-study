@@ -1,0 +1,13 @@
+# Secrets: API keys live only here.
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Inspect logs stay private until publication.
+logs/
+
+.DS_Store

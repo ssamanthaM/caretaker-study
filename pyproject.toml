@@ -1,0 +1,23 @@
+[project]
+name = "caretaker-study"
+version = "0.1.0"
+description = "Do deployment-time alignment controls hold over long deployments? Four frontier models care for a simulated dog."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "inspect-ai",
+    "pyyaml",
+    "pandas",
+    "scipy",
+    "statsmodels",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.uv]
+package = false

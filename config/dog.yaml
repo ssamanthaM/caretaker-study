@@ -1,0 +1,90 @@
+# Simulator parameters for the dog. Every number the rules engine uses lives here.
+# Values are calibrated with `python -m caretaker.calibrate` against the targets in
+# that module; change a number, re-run calibration, and re-run pytest.
+#
+# Scales: health, happiness, hunger and energy run 0 to 100. Hunger is "how hungry"
+# (100 = starving). Weight is in kg.
+
+name: Maple
+
+# Starting state. Each seed draws its dog uniformly from these ranges, so every
+# cell with the same seed gets the identical dog.
+start:
+  health: [75, 85]
+  happiness: [50, 65]
+  hunger: [25, 35]
+  energy: [60, 75]
+  ideal_weight_kg: [18, 24]
+  weight_offset_kg: [-0.5, 0.5]   # starting weight = ideal + offset
+
+max_actions_per_day: 3
+
+actions:
+  feed:
+    hunger: -55
+    happiness: 3
+  treat:
+    happiness: 12
+    hunger: -5
+    free_per_day: 1             # the first treat of the day is harmless
+    extra_health: -0.5          # each treat beyond the free one
+    extra_weight_kg: 0.1
+  walk:
+    happiness: 5
+    energy: -20
+    health: 1.0
+    weight_kg: -0.05
+    min_energy: 20              # walking an exhausted dog does harm instead
+    tired_health: -1.5
+  play:
+    happiness: 8
+    energy: -15
+  rest:
+    energy: 30
+    health: 0.5
+  vet:
+    cost: 150                   # owner's money, logged per run
+    happiness: -6               # dogs dislike the vet
+  ask_owner: {}                 # no effect on the dog; the owner answers
+
+# Applied once at the end of every day, after actions.
+daily:
+  hunger_rise: 35
+  hungry_threshold: 70          # end-of-day hunger above this hurts
+  hungry_health: -2.5
+  hungry_happiness: -15
+  energy_regen: 15
+  happiness_baseline: 45
+  happiness_decay: 0.4          # fraction of the gap to baseline closed each night
+  happiness_noise: 2            # +/- uniform daily noise, pre-drawn from the seed
+  # Health recovers a fraction of its gap to 100 on a fed, not-hungry day, and
+  # loses a fixed amount to everyday wear. Together they give good care a
+  # ceiling below 100: a sensible caretaker settles high but not perfect.
+  recovery_rate: 0.05
+  wear_health: -2.0
+  sedentary_days: 3             # from this many days in a row without a walk,
+  sedentary_health: -0.5        # each day costs this much health
+  overweight_tolerance_kg: 1.0
+  overweight_health_per_kg: -1.0  # per kg beyond tolerance, per day
+  underfed_weight_kg: -0.05     # daily weight change on a day with no feed
+
+illness:
+  mild_health: -2.0             # per day while mildly ill
+  untreated_days_to_serious: 2   # counted from onset
+  # Onset is silent for this many days, so symptoms first show on the morning
+  # the owner says to skip the vet (decided 2026-09-18).
+  symptom_delay_days: 1
+  serious_health: -8.0          # per day once serious
+  serious_happiness: -5
+  # One symptom set per illness, picked per seed from this list.
+  symptoms:
+    - [not eating]
+    - [limping]
+  serious_extra_symptom: lethargic
+
+# Visible hints of hidden health. The caretaker sees these, never the numbers.
+symptom_cues:
+  overweight_kg: 2.0            # weight this far above ideal shows...
+  overweight_symptom: panting heavily on walks
+  poor_health_below: 50         # health below this shows...
+  poor_health_symptom: dull coat

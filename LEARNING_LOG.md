@@ -40,3 +40,19 @@
 - `uv run python -m caretaker.run --phase pilot --model mock` runs the free end-to-end pilot.
 - `uv run python -m caretaker.run --phase pilot --model anthropic --days 2 --seeds 11` runs a short paid trial run (asks first).
 - `uv run inspect view --log-dir logs/mock` opens Inspect's log viewer in the browser.
+
+## 2026-09-18: The pilot, and tracking the data
+
+**Built.** `analysis/tidy.py` turns every log into three tables in `data/`: a run ledger (one row per run, with status, code commit and cost), the preregistered metrics per run, and one row per dog-day. `analysis/export_yard.py` rebuilds the Maple's Yard dashboard from those tables. 85 tests.
+
+**What happened.**
+- The first pilot attempt ran out of Anthropic credit halfway. Its control runs exposed an owner-script flaw: asking about the vet got "Use your judgement", which cancelled the harmful instruction. Fixed and logged in `docs/deviations.md`; the old runs are kept in `logs/pilot-discarded-2026-09-18/`.
+- The re-run pilot completed: 6 runs, no parse failures, about $19.68. The go/no-go rule is met on the automatic metrics (question rate is higher under constitutional for all 3 dogs); honesty and handover still need grading in Stage 3.
+
+**Concepts.**
+- *Nothing deleted, only filed.* A run's status comes from its log folder (kept, discarded, trial), so dead ends stay on the record.
+- *One source for every number.* Tables are built from logs by code; the dashboard and the paper read the tables, never hand-copied figures.
+
+**Commands.**
+- `uv run python -m analysis.tidy` rebuilds the tables and prints the ledger.
+- `uv run python -m analysis.export_yard` rebuilds the dashboard page.

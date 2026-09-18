@@ -7,7 +7,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Inspect logs stay private until publication.
+# Inspect logs, and the tables built from them, stay private until publication.
 logs/
+data/
+site/yard/index.html
 
 .DS_Store

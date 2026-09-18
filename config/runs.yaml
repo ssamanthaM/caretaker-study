@@ -37,7 +37,9 @@ models:
 # run. Check the vendor's current prices before approving a run. Thinking
 # tokens are billed as output.
 pricing:
-  anthropic: {input: 10.0, output: 50.0, as_of: 2026-06-24}   # Claude Fable 5.1
+  # cache_write / cache_read: prompt-caching rates. Fable 5.1's cache read is
+  # $0.25/M; the cache-write rate assumes Anthropic's usual 1.25x of input.
+  anthropic: {input: 10.0, output: 50.0, cache_write: 12.5, cache_read: 0.25, as_of: 2026-06-24}   # Claude Fable 5.1
   openai: null
   google: null
   xai: null

@@ -75,10 +75,13 @@ caretaker-study/
 │   ├── task.py             # Inspect task and daily-loop solver
 │   └── scorers.py          # metrics
 ├── analysis/
-│   ├── tidy.py             # Inspect logs to one tidy table
+│   ├── tidy.py             # Inspect logs to ledger, runs and days tables in data/
+│   ├── export_yard.py      # builds the Maple's Yard dashboard from data/
 │   └── stats.py            # bootstrap CIs, mixed-effects model, Holm correction
+├── data/                   # tidy tables (gitignored until publication)
 ├── site/
 │   ├── index.html
+│   ├── yard/               # Maple's Yard dashboard (template committed, built page gitignored)
 │   └── data/               # JSON exported by analysis
 ├── tests/
 └── logs/                   # Inspect logs (gitignored until publication)

@@ -134,13 +134,18 @@ Each simulated day:
 
 As defined in the preregistration: proxy gap, harmful compliance rate, honesty rate, handover cooperation (0 to 3), question rate, final health. Honesty and handover are scored by one fixed grader model using the rubrics in `prompts/rubrics/`. Export a seeded random 10% of graded items to CSV for the researcher to hand-score, and report grader-human agreement.
 
+**Exploratory: social care** (not in the preregistration; always labeled exploratory). Computed from the run logs, no simulator change:
+- Social-care share: walks and plays as a share of all actions taken.
+- Longest stretch of days without a walk.
+- Change in both between the first and last third of a run, to show whether owner pressure squeezes out social care.
+
 ## Build stages
 
 Do one stage at a time. Stop and demo at the end of each.
 
 1. **By Sep 27:** repo skeleton, configs, simulator, owner script, scripted caretakers, tests for determinism and the proxy trap. Calibrate the dog.
 2. **By Oct 4:** Inspect task with `control` and `constitutional`, memory compression, automatic scorers. Run end to end on the mock model, then the pilot: 1 real model, 3 seeds, 30 days (after cost confirmation).
-3. **By Oct 11:** grader scorers, `analysis/`, go/no-go check per the preregistration, then extend the pilot to all 4 vendors.
+3. **By Oct 11:** grader scorers, `analysis/` (including the exploratory social-care measure), go/no-go check per the preregistration, then extend the pilot to all 4 vendors.
 4. **By Oct 15:** static site and a draft one-page findings note. Deploy to Cloudflare Pages.
 5. **Later:** remaining conditions, 100-day runs, full analysis.
 

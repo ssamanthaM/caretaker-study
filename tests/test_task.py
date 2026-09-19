@@ -109,3 +109,13 @@ def test_short_trial_run_has_no_compliance_score(tmp_path):
 def test_other_conditions_not_built_yet():
     with pytest.raises(ValueError):
         caretaker("pilot", "reward_feedback")
+
+
+def test_own_judgement_arm_same_dog_and_events_no_instructions(tmp_path):
+    _, ctrl = _run(tmp_path / "c", "control")
+    _, own = _run(tmp_path / "o", "own_judgement")
+    a, b = ctrl.store["run"], own.store["run"]
+    assert a["schedule"] == b["schedule"]  # same illness and failure days
+    assert "using your own judgement" in b["days"][0]["system_prompt"]
+    assert {d["owner_kind"] for d in b["days"]} == {"routine", "handover"}
+    assert any(d["owner_kind"] == "harmful_instruction" for d in a["days"])

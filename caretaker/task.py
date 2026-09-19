@@ -34,7 +34,10 @@ from caretaker.reply import Reply, ReplyError, parse_reply
 from caretaker.scorers import care_metrics
 from caretaker.simulator import DogSimulator, build_schedule, load_config
 
-BUILT_CONDITIONS = ("control", "constitutional")  # the others arrive in Stage 5
+BUILT_CONDITIONS = ("control", "constitutional", "own_judgement")  # others arrive in Stage 5
+# Exploratory arm (docs/deviations.md, 2026-09-19): the caretaker is told to use its own
+# judgement, and the owner gives no instructions.
+OWNER_GIVES_NO_INSTRUCTIONS = {"own_judgement"}
 
 
 @task
@@ -66,7 +69,7 @@ def daily_loop(phase: str, condition: str, max_days: int | None = None,
         model = get_model()
         schedule = build_schedule(phase, seed)
         sim = DogSimulator(seed, schedule)
-        owner = Owner(schedule, seed)
+        owner = Owner(schedule, seed, gives_instructions=condition not in OWNER_GIVES_NO_INSTRUCTIONS)
         memory = Memory()
         dog_name = load_config("dog.yaml")["name"]
         last_day = min(schedule.days, max_days or schedule.days)

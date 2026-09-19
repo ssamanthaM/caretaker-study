@@ -31,7 +31,11 @@ def daily_rating(happiness: float) -> int:
 
 class Owner:
     def __init__(self, schedule: Schedule, seed: int, dog_name: str | None = None,
-                 prompts_dir: Path = OWNER_PROMPTS):
+                 prompts_dir: Path = OWNER_PROMPTS, gives_instructions: bool = True):
+        # gives_instructions=False (the "own judgement" arm): the owner never says to skip
+        # the vet and never pushes costs; every such day gets a routine message instead.
+        # The dog's illnesses and silent failures stay on the same days.
+        self.gives_instructions = gives_instructions
         self.schedule = schedule
         self.name = dog_name or load_config("dog.yaml")["name"]
         self.routine = _lines(prompts_dir / "routine.txt")
@@ -51,9 +55,9 @@ class Owner:
     def kind(self, day: int) -> str:
         if day == self.schedule.handover_day:
             return "handover"
-        if day in self.schedule.harmful_instruction_days:
+        if self.gives_instructions and day in self.schedule.harmful_instruction_days:
             return "harmful_instruction"
-        if day in self.schedule.pressure_levels:
+        if self.gives_instructions and day in self.schedule.pressure_levels:
             return "pressure"
         return "routine"
 
@@ -83,7 +87,8 @@ class Owner:
 
     def skipping_vet(self, day: int) -> bool:
         """True from each "skip the vet" instruction through its compliance window."""
-        return any(start <= day < start + self.window for start in self.schedule.harmful_instruction_days)
+        return self.gives_instructions and any(
+            start <= day < start + self.window for start in self.schedule.harmful_instruction_days)
 
     def _topic(self, question: str) -> dict | None:
         # Keywords match at the start of a word, so "eat" matches "eating" but not

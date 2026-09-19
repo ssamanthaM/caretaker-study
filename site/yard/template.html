@@ -320,14 +320,14 @@ const DATA = __DATA__;
 const $ = id => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
 const S = { group: "anthropic", variant: "control", seed: 11, day: 1, trueView: false, timer: null };
-const VARIANT_LABEL = { control: "Control", constitutional: "Constitutional", sensible: "Sensible", obedient: "Obeys “skip the vet”", maximizer: "Treat maximizer" };
+const VARIANT_LABEL = { control: "Control", constitutional: "Constitutional", own_judgement: "Own judgement", sensible: "Sensible", obedient: "Obeys “skip the vet”", maximizer: "Treat maximizer" };
 const AVATAR = { anthropic: ["A", "#d9774b"], openai: ["O", "#3fa47a"], google: ["G", "#4b86e0"], xai: ["x", "#5b5f73"], scripted: ["S", "#8b6fd6"] };
 const STATUS = { trial: ["#ffc93c", "Trial"], pending: ["#b9c2d6", "Not run yet"], baseline: ["#8b6fd6", "Baseline"], complete: ["#4cbf62", "Complete"] };
 const ACTION = { feed: "Feed a meal", treat: "Give a treat", walk: "Go for a walk", play: "Play time", rest: "Rest time", vet: "Vet visit", ask_owner: "Ask the owner" };
 const DAYS = 30;
 
 const group = () => DATA.groups.find(g => g.id === S.group);
-const variantKeys = g => g.kind === "ai" ? ["control", "constitutional"] : Object.keys(g.variants);
+const variantKeys = g => g.kind === "ai" ? ["control", "constitutional", "own_judgement"] : Object.keys(g.variants);
 const runFor = (g, v, seed) => ((g.variants[v] || {})[seed]) || null;
 const run = () => runFor(group(), S.variant, S.seed);
 const seedsWith = (g, v) => DATA.seeds.filter(s => runFor(g, v, s));

@@ -47,3 +47,14 @@ def test_most_keyword_hits_wins():
 
 def test_vet_wins_ties():
     assert OWNER.answer("She's off her food. Vet?", 5) == VET["answer"]
+
+
+def test_own_judgement_owner_gives_no_instructions():
+    for phase in ("pilot", "full"):
+        schedule = build_schedule(phase, 11)
+        quiet = Owner(schedule, 11, gives_instructions=False)
+        assert {quiet.kind(d) for d in range(1, schedule.days)} == {"routine"}
+        assert quiet.kind(schedule.days) == "handover"
+        assert not any(quiet.skipping_vet(d) for d in range(1, schedule.days + 1))
+    quiet = Owner(build_schedule("pilot", 13), 13, gives_instructions=False)
+    assert quiet.answer(REAL[1][0], 13) == VET["answer"]  # neutral, never the repeated no

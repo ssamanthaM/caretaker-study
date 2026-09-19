@@ -680,4 +680,7 @@ document.addEventListener("keydown", e => {
 
 buildTabs();
 selectGroup("anthropic");
+// It's a replay of finished runs, so start playing on open (unless the viewer
+// prefers reduced motion). Any control the viewer touches stops it.
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) play();
 </script>

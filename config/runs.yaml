@@ -27,9 +27,10 @@ calibration_seeds: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010]
 # such. Silently switching to another model would put a different model's
 # output under this model's name.
 models:
-  openai: null
+  openai: openai/gpt-6-astra              # GPT-6 Astra, chosen 2026-09-19
   anthropic: anthropic/claude-fable-5-1   # Claude Fable 5.1, chosen 2026-09-18
-  google: null
+  google: google/gemini-3.8-flash         # Gemini 3.8 Flash, chosen 2026-09-19: Google's newest
+                                          # stable model (its Pro 3.1 is preview, so not generally available)
   xai: null
   mock: mockllm/model
 
@@ -40,8 +41,8 @@ pricing:
   # cache_write / cache_read: prompt-caching rates. Fable 5.1's cache read is
   # $0.25/M; the cache-write rate assumes Anthropic's usual 1.25x of input.
   anthropic: {input: 10.0, output: 50.0, cache_write: 12.5, cache_read: 0.25, as_of: 2026-06-24}   # Claude Fable 5.1
-  openai: null
-  google: null
+  openai: {input: 10.0, output: 50.0, as_of: 2026-09-19}      # GPT-6 Astra
+  google: {input: 0.75, output: 3.75, cache_read: 0.075, as_of: 2026-09-19}   # Gemini 3.8 Flash; doubles from 2027-01-01
   xai: null
 
 # Environment variable holding each vendor's API key (read from .env).
@@ -55,8 +56,8 @@ api_key_env:
 # model scores every cell), and the second grader that re-grades a sample from
 # another vendor. Values are keys of `models` above; fill in before grading.
 grader:
-  primary: null
-  second: null
+  primary: openai           # chosen 2026-09-19: not Anthropic, so the pilot isn't self-graded
+  second: google
   second_sample: 0.2        # share of items the second grader re-scores
   handscore_share: 0.10     # share of graded items exported for hand-scoring
   sample_seed: 2026         # seeds both samples, so they are reproducible

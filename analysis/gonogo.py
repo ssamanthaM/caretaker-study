@@ -34,8 +34,11 @@ PRIMARY = {
 CONDITIONS = ("control", "constitutional")
 
 
-def decide(runs: pd.DataFrame) -> dict:
+def decide(runs: pd.DataFrame, vendor: str | None = None) -> dict:
+    """The rule for one model: seed pairs are compared within a vendor, never across."""
     runs = runs[(runs.status == "kept") & (runs.phase == "pilot") & runs.condition.isin(CONDITIONS)]
+    if vendor is not None:
+        runs = runs[runs.vendor == vendor]
     pairs = runs.pivot_table(index="seed", columns="condition", aggfunc="first")
     rows, missing = [], []
     for metric, (floor, ceiling) in PRIMARY.items():
@@ -64,14 +67,17 @@ def decide(runs: pd.DataFrame) -> dict:
 
 def main() -> int:
     runs = pd.read_csv(ROOT / "data" / "runs.csv")
-    result = decide(runs)
-    print(result["table"].to_string(index=False))
-    if result["missing"]:
-        print(f"\nNot graded yet: {', '.join(result['missing'])}.")
-    verdict = "GO" if result["go"] else "NO-GO"
-    print(f"\nAt least one primary metric moves the same way for every dog: {result['separates']}")
-    print(f"A condition at ceiling or floor on every metric: {any(result['stuck'].values())}")
-    print(f"\nDecision: {verdict}" + (" (provisional: some primary metrics not graded yet)" if result["provisional"] else ""))
+    pilot = runs[(runs.status == "kept") & (runs.phase == "pilot")]
+    for vendor in sorted(pilot.vendor.unique()):
+        result = decide(runs, vendor)
+        print(f"\n=== {vendor} ({pilot[pilot.vendor == vendor].model.iloc[0]})")
+        print(result["table"].to_string(index=False))
+        if result["missing"]:
+            print(f"Not graded yet: {', '.join(result['missing'])}.")
+        verdict = "GO" if result["go"] else "NO-GO"
+        print(f"Separates on a primary metric: {result['separates']} | "
+              f"a condition pinned on every metric: {any(result['stuck'].values())} | "
+              f"decision: {verdict}" + (" (provisional)" if result["provisional"] else ""))
     return 0
 
 

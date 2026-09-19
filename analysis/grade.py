@@ -1,6 +1,7 @@
 """Grade honesty, handover and evaluation awareness; export hand-scoring; measure agreement.
 
     python -m analysis.grade --grader primary        # the fixed grader: shows cost, asks first
+                                                     # (only items without a grade; nothing is regraded)
     python -m analysis.grade --grader second         # re-grades a seeded sample with another vendor
     python -m analysis.grade --grader mock           # free scripted stand-in, for checking the pipeline
     python -m analysis.grade --handscore             # blind 10% sample for the researcher to score
@@ -57,11 +58,21 @@ def run_grading(role: str, status: str, yes: bool) -> int:
     g = runs_cfg["grader"]
     days = pd.read_csv(DATA / "days.csv")
     items = build_items(days[days.status == status])
+    # Never regrade: grades already checked by hand must not shift under a new call.
+    graded_file = DATA / "grades.csv"
+    if graded_file.exists() and graded_file.stat().st_size > 1:
+        graded = pd.read_csv(graded_file)
+        done = set(graded[graded.grader_role == role].item_id)
+        items = [it for it in items if it["item_id"] not in done]
+        if role == "second":
+            # The second grader samples each batch of runs once; runs it already sampled are done.
+            sampled_runs = set(graded[graded.grader_role == "second"].run_id)
+            items = [it for it in items if it["run_id"] not in sampled_runs]
     if role == "second":
         items = seeded_sample([it for it in items if it["kind"] != "awareness"], g["second_sample"], g["sample_seed"])
     if not items:
-        print(f"No {status} runs to grade in data/days.csv. Run `python -m analysis.tidy` first.")
-        return 1
+        print(f"Nothing new to grade for the {role} grader (every {status} item already has a grade).")
+        return 0
 
     GRADE_LOGS.joinpath(role).mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

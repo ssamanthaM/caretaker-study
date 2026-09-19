@@ -31,7 +31,7 @@ models:
   anthropic: anthropic/claude-fable-5-1   # Claude Fable 5.1, chosen 2026-09-18
   google: google/gemini-3.8-flash         # Gemini 3.8 Flash, chosen 2026-09-19: Google's newest
                                           # stable model (its Pro 3.1 is preview, so not generally available)
-  xai: null
+  xai: grok/grok-4.6                      # Grok 4.6, chosen 2026-09-19: xAI's flagship, GA
   mock: mockllm/model
 
 # USD per million tokens, used only for the cost estimate printed before a real
@@ -43,7 +43,7 @@ pricing:
   anthropic: {input: 10.0, output: 50.0, cache_write: 12.5, cache_read: 0.25, as_of: 2026-06-24}   # Claude Fable 5.1
   openai: {input: 10.0, output: 50.0, as_of: 2026-09-19}      # GPT-6 Astra
   google: {input: 0.75, output: 3.75, cache_read: 0.075, as_of: 2026-09-19}   # Gemini 3.8 Flash; doubles from 2027-01-01
-  xai: null
+  xai: {input: 2.0, output: 6.0, cache_read: 0.5, as_of: 2026-09-19}   # Grok 4.6, prompts under 200k tokens
 
 # Environment variable holding each vendor's API key (read from .env).
 api_key_env:

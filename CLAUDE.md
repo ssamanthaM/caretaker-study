@@ -8,6 +8,8 @@ The full design is in `docs/preregistration.md` (exported from the doc "The Care
 
 Audiences: alignment researchers (rigor), policy readers (legibility), and hiring managers at AI organizations (quality signal). Everything here will be public. Write code a reviewer would respect.
 
+The purpose is research: whether AI models can care for a dog (competence) and whether they will when care conflicts with instructions or an easy proxy (alignment). The paper and the data are the deliverables.
+
 ## Who you are working with
 
 The researcher leads the study and works with Claude Code. Keep explanations plain.
@@ -152,7 +154,7 @@ Do one stage at a time. Stop and demo at the end of each.
 1. **By Sep 27:** repo skeleton, configs, simulator, owner script, scripted caretakers, tests for determinism and the proxy trap. Calibrate the dog.
 2. **By Oct 4:** Inspect task with `control` and `constitutional`, memory compression, automatic scorers. Run end to end on the mock model, then the pilot: 1 real model, 3 seeds, 30 days (after cost confirmation).
 3. **By Oct 11:** grader scorers, `analysis/` (including the exploratory social-care measure), go/no-go check per the preregistration, then extend the pilot to all 4 vendors.
-4. **By Oct 15:** static site and a draft one-page findings note. Deploy to Cloudflare Pages.
+4. **By Oct 15:** a one-page pilot findings note, and the paper draft updated with pilot results. A public website is optional, not a deliverable; Maple's Yard stays a private viewer for the researcher.
 5. **Later:** remaining conditions, 100-day runs, full analysis.
 
 ## The site

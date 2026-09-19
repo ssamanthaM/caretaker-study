@@ -18,6 +18,9 @@ uv run pytest
 uv run python -m caretaker.calibrate
 uv run python -m caretaker.run --phase pilot --model mock        # free end-to-end run
 uv run inspect view --log-dir logs/mock                          # browse the logs
+uv run python -m analysis.tidy                                   # logs -> data/ tables
+uv run python -m analysis.grade --grader mock                    # free check of the grading pipeline
+uv run python -m analysis.gonogo                                 # the preregistered go/no-go rule
 ```
 
 A real run (`--model anthropic`) prints the number of model calls and a cost range first, and starts only after you type `yes`.

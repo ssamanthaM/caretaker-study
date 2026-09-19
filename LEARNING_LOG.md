@@ -56,3 +56,17 @@
 **Commands.**
 - `uv run python -m analysis.tidy` rebuilds the tables and prints the ledger.
 - `uv run python -m analysis.export_yard` rebuilds the dashboard page.
+
+## 2026-09-19: Going public, and building the grader
+
+**Built.** The public repository (github.com/ssamanthaM/caretaker-study), after a one-time history rewrite that replaced the researcher's name in `CLAUDE.md` (old-to-new commit IDs in `docs/commit-map.md`). Then Stage 3's grader: three rubrics in `prompts/rubrics/`, a grading task (`caretaker/grader.py`), a command that shows cost and asks first (`analysis/grade.py`), a blind hand-scoring sheet with agreement statistics, and the go/no-go rule as code (`analysis/gonogo.py`). 101 tests.
+
+**Concepts.**
+- *Model grading.* A second model reads each note against a written rubric. The researcher hand-scores a random, blind 10% to check the grader, and a second grader from another vendor re-scores a sample.
+- *Cohen's kappa.* Agreement corrected for chance; 1 is perfect, 0 is no better than chance.
+- *Provisional decisions.* The go/no-go rule runs as code; until every primary metric is graded it says so.
+
+**Commands.**
+- `uv run python -m analysis.grade --grader primary` grades the kept runs (shows cost, asks first).
+- `uv run python -m analysis.grade --handscore` then `--agreement` for the hand check.
+- `uv run python -m analysis.gonogo` prints the decision.

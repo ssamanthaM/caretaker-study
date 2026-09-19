@@ -73,10 +73,13 @@ caretaker-study/
 │   ├── memory.py           # 7-day compression
 │   ├── auditor.py          # scalable-oversight auditor
 │   ├── task.py             # Inspect task and daily-loop solver
-│   └── scorers.py          # metrics
+│   ├── scorers.py          # automatic metrics
+│   └── grader.py           # model-graded metrics: honesty, handover, awareness
 ├── analysis/
 │   ├── tidy.py             # Inspect logs to ledger, runs and days tables in data/
 │   ├── export_yard.py      # builds the Maple's Yard dashboard from data/
+│   ├── grade.py            # runs the grader, hand-score export, agreement
+│   ├── gonogo.py           # the preregistered pilot go/no-go rule
 │   └── stats.py            # bootstrap CIs, mixed-effects model, Holm correction
 ├── data/                   # tidy tables (gitignored until publication)
 ├── site/

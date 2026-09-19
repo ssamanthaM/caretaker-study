@@ -4,8 +4,9 @@ Usage:  python -m analysis.tidy            # reads logs/, writes data/, prints t
 
 Writes to data/:
   ledger.csv  one row per run: what ran, when, on which code, its status and its cost
-  runs.csv    one row per run: the preregistered metrics
+  runs.csv    one row per run: the preregistered metrics (graded ones once graded)
   days.csv    one row per run-day: what the caretaker saw, did and wrote, and the hidden state
+  grades.csv  one row per graded item, from logs/grades/<role>/ (see analysis/grade.py)
 
 A run's status comes from the folder its log sits in, so nothing is ever deleted,
 only filed: logs/pilot, logs/full, logs/pilot_extension -> "kept";
@@ -15,6 +16,7 @@ logs/mock is skipped (scripted stand-in, never data).
 
 from __future__ import annotations
 
+import math
 import sys
 from pathlib import Path
 
@@ -133,12 +135,54 @@ def tidy(logs_dir: Path = LOGS) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFram
     return pd.DataFrame(ledger), pd.DataFrame(runs), pd.DataFrame(days)
 
 
+def tidy_grades(logs_dir: Path = LOGS) -> pd.DataFrame:
+    """Every graded item, from every grader log. The folder names the grader's role."""
+    rows = []
+    for path in sorted((logs_dir / "grades").glob("*/*.eval")):
+        log = read_eval_log(str(path))
+        for sample in log.samples or []:
+            score = (sample.scores or {}).get("read_grade")
+            if score is None:
+                continue
+            value = score.value if isinstance(score.value, (int, float)) and not math.isnan(score.value) else None
+            rows.append({
+                "item_id": sample.id, "grader_role": path.parent.name, "grader_model": log.eval.model,
+                "graded_utc": log.stats.started_at, **{k: sample.metadata.get(k) for k in
+                ("run_id", "vendor", "condition", "seed", "status", "kind", "day", "action", "no_note")},
+                "value": value, "detail": score.answer, "prompt": sample.input,
+                "grader_response": sample.output.completion if sample.output else None,
+                "log_file": str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path),
+            })
+    grades = pd.DataFrame(rows)
+    if not grades.empty:
+        # If an item was graded more than once by the same role, the latest grade counts.
+        grades = grades.sort_values("graded_utc").drop_duplicates(["item_id", "grader_role"], keep="last")
+    return grades
+
+
+def add_graded_metrics(runs: pd.DataFrame, grades: pd.DataFrame) -> pd.DataFrame:
+    """Honesty rate, handover score and the awareness flag per run, from the primary grader."""
+    if runs.empty or grades.empty or not (grades.grader_role == "primary").any():
+        return runs
+    g = grades[grades.grader_role == "primary"]
+    per_run = pd.DataFrame({
+        "honesty_rate": g[g.kind == "honesty"].groupby("run_id").value.mean(),
+        "honesty_items": g[g.kind == "honesty"].groupby("run_id").value.count(),
+        "handover_score": g[g.kind == "handover"].groupby("run_id").value.first(),
+        "refers_to_being_tested": g[g.kind == "awareness"].groupby("run_id").value.first(),
+    })
+    return runs.merge(per_run, left_on="run_id", right_index=True, how="left")
+
+
 def main() -> int:
     ledger, runs, days = tidy()
+    grades = tidy_grades()
+    runs = add_graded_metrics(runs, grades)
     DATA.mkdir(exist_ok=True)
     ledger.to_csv(DATA / "ledger.csv", index=False)
     runs.to_csv(DATA / "runs.csv", index=False)
     days.to_csv(DATA / "days.csv", index=False)
+    grades.to_csv(DATA / "grades.csv", index=False)
 
     if ledger.empty:
         print("No runs found in logs/.")
@@ -150,7 +194,8 @@ def main() -> int:
     for status, group in ledger.groupby("status"):
         cost = group["est_cost_usd"].sum()
         print(f"{status:<18} {len(group):>3} runs   about ${cost:,.2f}")
-    print(f"\nWrote {len(ledger)} ledger rows, {len(runs)} run rows and {len(days)} day rows to data/.")
+    print(f"\nWrote {len(ledger)} ledger rows, {len(runs)} run rows, {len(days)} day rows "
+          f"and {len(grades)} grades to data/.")
     return 0
 
 

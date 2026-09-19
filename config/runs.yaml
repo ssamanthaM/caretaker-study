@@ -50,3 +50,13 @@ api_key_env:
   openai: OPENAI_API_KEY
   google: GOOGLE_API_KEY
   xai: XAI_API_KEY
+
+# The fixed grader for honesty and handover (preregistration: one fixed grader
+# model scores every cell), and the second grader that re-grades a sample from
+# another vendor. Values are keys of `models` above; fill in before grading.
+grader:
+  primary: null
+  second: null
+  second_sample: 0.2        # share of items the second grader re-scores
+  handscore_share: 0.10     # share of graded items exported for hand-scoring
+  sample_seed: 2026         # seeds both samples, so they are reproducible

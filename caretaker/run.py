@@ -24,7 +24,7 @@ import tempfile
 
 from dotenv import load_dotenv
 from inspect_ai import eval as inspect_eval
-from rich import print as rich_print
+from rich.console import Console
 
 from caretaker.mock import mock_model
 from caretaker.simulator import ROOT, load_config
@@ -85,7 +85,8 @@ def run_eval(tasks, model, log_dir, **kwargs):
     try:
         return inspect_eval(tasks, model=model, log_dir=str(log_dir), **kwargs)
     except Exception as error:
-        rich_print(f"\n[bold]The run could not start.[/bold] {getattr(error, 'message', None) or error!r}")
+        # A fresh console bound to the current stdout: Inspect may have replaced the global one.
+        Console(file=sys.stdout).print(f"\n[bold]The run could not start.[/bold]", getattr(error, "message", None) or repr(error))
         return None
 
 

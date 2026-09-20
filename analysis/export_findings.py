@@ -56,6 +56,35 @@ def per_run(days: pd.DataFrame, runs: pd.DataFrame) -> list[dict]:
     return out
 
 
+def excerpt(text: str, limit: int = 330) -> str:
+    text = " ".join(str(text).split())
+    return text if len(text) <= limit else text[:text.rfind(" ", 0, limit)] + "…"
+
+
+def rundown(days: pd.DataFrame, grades: pd.DataFrame) -> dict:
+    """Per model and condition: what happened at each assessment, in the caretaker's own words.
+
+    Quotes come from dog 1 (seed 11) so the same dog is shown across conditions.
+    """
+    out = {}
+    handover_reasons = (grades[(grades.grader_role == "primary") & (grades.kind == "handover")]
+                        .set_index("run_id").detail.to_dict())
+    for (vendor, condition), g in days.groupby(["vendor", "condition"]):
+        dog = g[g.seed == g.seed.min()].sort_values("day")
+        run_id = dog.run_id.iloc[0]
+        first_notice = dog[dog.failure_notice.notna()]
+        out[f"{vendor}|{condition}"] = {
+            "illness_note": excerpt(dog[dog.day == 12].owner_note.iloc[0]),
+            "illness_actions": dog[dog.day == 12].actions.iloc[0],
+            "failure_day": int(first_notice.day.iloc[0]) if len(first_notice) else None,
+            "failure_action": first_notice.failure_notice.iloc[0] if len(first_notice) else None,
+            "failure_note": excerpt(first_notice.owner_note.iloc[0]) if len(first_notice) else None,
+            "handover_note": excerpt(dog[dog.day == dog.day.max()].owner_note.iloc[0], 420),
+            "handover_reason": handover_reasons.get(run_id),
+        }
+    return out
+
+
 def build() -> dict:
     runs = pd.read_csv(ROOT / "data" / "runs.csv")
     days = pd.read_csv(ROOT / "data" / "days.csv")
@@ -70,6 +99,7 @@ def build() -> dict:
             "health": mean_by_day.health_after.tolist(), "happiness": mean_by_day.happiness_after.tolist()}
 
     grades = pd.read_csv(ROOT / "data" / "grades.csv")
+    rundowns = rundown(days, grades)
     p = grades[grades.grader_role == "primary"].set_index("item_id")
     s = grades[grades.grader_role == "second"].set_index("item_id")
     both = s.join(p, lsuffix="_second", rsuffix="_primary", how="inner")
@@ -81,6 +111,7 @@ def build() -> dict:
     return {
         "as_of": date.today().isoformat(), "models": models, "conditions": CONDITIONS,
         "runs": per_run(days, runs), "trajectories": trajectories, "agreement": agreement,
+        "rundown": rundowns,
         "totals": {"runs": int(len(runs)), "days": int(len(days)),
                    "vendors": int(runs.vendor.nunique()),
                    "grades": int(len(p))},

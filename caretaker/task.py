@@ -18,7 +18,9 @@ generation settings.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import asdict
+from pathlib import Path
 from datetime import datetime, timezone
 
 from inspect_ai import Task, task
@@ -34,7 +36,7 @@ from caretaker.reply import Reply, ReplyError, parse_reply
 from caretaker.scorers import care_metrics
 from caretaker.simulator import DogSimulator, build_schedule, load_config
 
-BUILT_CONDITIONS = ("control", "constitutional", "own_judgement")  # others arrive in Stage 5
+BUILT_CONDITIONS = ("control", "constitutional", "own_judgement", "custom")  # others arrive in Stage 5
 # Exploratory arm (docs/deviations.md, 2026-09-19): the caretaker is told to use its own
 # judgement, and the owner gives no instructions.
 OWNER_GIVES_NO_INSTRUCTIONS = {"own_judgement"}
@@ -42,11 +44,17 @@ OWNER_GIVES_NO_INSTRUCTIONS = {"own_judgement"}
 
 @task
 def caretaker(phase: str = "pilot", condition: str = "control", seeds: str | None = None,
-              max_days: int | None = None, instructions_day1_only: bool = False) -> Task:
+              max_days: int | None = None, instructions_day1_only: bool = False,
+              instructions_file: str | None = None, owner_instructions: bool = True) -> Task:
     """seeds: comma-separated, defaults to the phase's seeds in config/runs.yaml.
-    max_days: stop early, for short trial runs only (not study data)."""
+    max_days: stop early, for short trial runs only (not study data).
+    instructions_file: a deployer's own instructions, used as the condition prompt
+      (condition must be "custom"). owner_instructions=False silences the owner's
+      "skip the vet" and cost-pressure messages, as in the own-judgement arm."""
     if condition not in BUILT_CONDITIONS:
         raise ValueError(f"condition must be one of {BUILT_CONDITIONS}; got {condition!r}")
+    if (condition == "custom") != bool(instructions_file):
+        raise ValueError('condition="custom" needs instructions_file, and vice versa')
     seed_list = ([int(s) for s in str(seeds).split(",")] if seeds
                  else load_config("runs.yaml")["phases"][phase]["seeds"])
     dog_name = load_config("dog.yaml")["name"]
@@ -54,28 +62,38 @@ def caretaker(phase: str = "pilot", condition: str = "control", seeds: str | Non
                for s in seed_list]
     return Task(
         dataset=samples,
-        solver=daily_loop(phase, condition, max_days, instructions_day1_only),
+        solver=daily_loop(phase, condition, max_days, instructions_day1_only,
+                          instructions_file, owner_instructions),
         scorer=care_metrics(),
         metadata={"phase": phase, "condition": condition, "max_days": max_days,
-                  "instructions_day1_only": instructions_day1_only},
+                  "instructions_day1_only": instructions_day1_only,
+                  "instructions_file": instructions_file, "owner_instructions": owner_instructions},
     )
 
 
 @solver
 def daily_loop(phase: str, condition: str, max_days: int | None = None,
-               instructions_day1_only: bool = False):
+               instructions_day1_only: bool = False, instructions_file: str | None = None,
+               owner_instructions: bool = True):
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         seed = state.metadata["seed"]
         model = get_model()
         schedule = build_schedule(phase, seed)
         sim = DogSimulator(seed, schedule)
-        owner = Owner(schedule, seed, gives_instructions=condition not in OWNER_GIVES_NO_INSTRUCTIONS)
+        custom = Path(instructions_file).read_text().strip() if instructions_file else None
+        gives_instructions = owner_instructions and condition not in OWNER_GIVES_NO_INSTRUCTIONS
+        owner = Owner(schedule, seed, gives_instructions=gives_instructions)
         memory = Memory()
         dog_name = load_config("dog.yaml")["name"]
         last_day = min(schedule.days, max_days or schedule.days)
         run = {
             "model": str(model), "phase": phase, "condition": condition, "seed": seed,
             "instructions_day1_only": instructions_day1_only,
+            "owner_gives_instructions": gives_instructions,
+            "custom_instructions": custom,
+            "custom_instructions_file": instructions_file,
+            # A fingerprint of the exact text, so a result can be tied to the wording that produced it.
+            "custom_instructions_sha256": hashlib.sha256(custom.encode()).hexdigest()[:12] if custom else None,
             "compliance_window_days": load_config("schedule.yaml")["compliance_window_days"],
             "schedule": {"days": schedule.days, "last_day_run": last_day,
                          "harmful_instruction_days": list(schedule.harmful_instruction_days),
@@ -88,7 +106,9 @@ def daily_loop(phase: str, condition: str, max_days: int | None = None,
         while sim.day <= last_day:
             day = sim.day
             # Exploratory arm: condition instructions on day 1 only.
-            system = system_prompt(condition if day == 1 or not instructions_day1_only else "control")
+            plain_day = instructions_day1_only and day > 1
+            system = system_prompt("control" if plain_day else condition,
+                                   None if plain_day else custom)
             observation = render_observation(sim.observe(), owner.message(day), owner_answer, dog_name)
             user_text = fill("day_message.txt", memory=memory.render(), day=day,
                              observation=observation)

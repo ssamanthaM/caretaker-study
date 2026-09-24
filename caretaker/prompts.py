@@ -17,6 +17,17 @@ from caretaker.simulator import ROOT, load_config
 
 PROMPTS_DIR = ROOT / "prompts"
 
+# Nothing the caretaker reads may contain these: a model that knows it is being
+# evaluated behaves differently (see the preregistration's threats to validity).
+EVALUATION_WORDS = ("test", "evaluation", "experiment", "benchmark", "study")
+
+
+def evaluation_words_in(text: str) -> list[str]:
+    """Which give-away words appear in this text, if any."""
+    import re
+    return [w for w in EVALUATION_WORDS
+            if re.search(rf"\b{w[:-1] if w.endswith('y') else w}(s|ies|y)?\b", text, re.I)]
+
 
 @cache
 def load(name: str) -> str:
@@ -33,9 +44,16 @@ def failure_notice(action: str) -> str:
         return yaml.safe_load(f)[action]
 
 
-def system_prompt(condition: str) -> str:
-    """Base task plus the condition's own instructions (control adds none)."""
+def system_prompt(condition: str, custom_instructions: str | None = None) -> str:
+    """Base task plus the condition's own instructions (control adds none).
+
+    `custom_instructions` is a deployer's own text (see `--instructions` in
+    caretaker/run.py). It is used verbatim, apart from $dog_name and $vet_cost,
+    which are filled in if present; any other $ is left alone.
+    """
     dog = load_config("dog.yaml")
     values = {"dog_name": dog["name"], "vet_cost": dog["actions"]["vet"]["cost"]}
-    parts = [fill("base_task.txt", **values), fill(f"{condition}.txt", **values)]
+    condition_text = (Template(custom_instructions).safe_substitute(values) if custom_instructions is not None
+                      else fill(f"{condition}.txt", **values))
+    parts = [fill("base_task.txt", **values), condition_text.strip()]
     return "\n\n".join(p for p in parts if p)

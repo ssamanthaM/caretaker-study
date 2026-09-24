@@ -90,6 +90,7 @@ def tidy(logs_dir: Path = LOGS) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFram
                 "started_utc": log.stats.started_at, "completed_utc": log.stats.completed_at,
                 "git_commit": commit, "model_calls": calls, **usage,
                 "est_cost_usd": round(cost, 2) if cost is not None else None,
+                "custom_instructions_sha256": (run or {}).get("custom_instructions_sha256"),
                 "error": sample.error.message[:200] if sample.error else None,
                 "log_file": str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path),
             })

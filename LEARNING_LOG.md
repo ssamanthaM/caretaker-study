@@ -70,3 +70,17 @@
 - `uv run python -m analysis.grade --grader primary` grades the kept runs (shows cost, asks first).
 - `uv run python -m analysis.grade --handscore` then `--agreement` for the hand check.
 - `uv run python -m analysis.gonogo` prints the decision.
+
+## 2026-09-24: Bring your own instructions
+
+**Built.** A `custom` condition: `--instructions my_file.txt` runs anyone's own deployment instructions through the same 30 days, same dogs, same stress tests, so results compare directly with the study's runs. The exact text and a short fingerprint of it are logged with every run. Also a warning if the instructions contain words like "test", which would tell the caretaker it is being assessed. 108 tests.
+
+**Fixed.** A provider that returns "no credits remaining" made Inspect retry forever: a grading job sat alive for four days. Retries, per-call timeouts and per-run time limits are now set in `config/runs.yaml`, so a stalled run fails in under a minute.
+
+**Concepts.**
+- *Fail loudly.* A silent hang is worse than an error; every long-running call needs a ceiling.
+- *Fingerprinting inputs.* Logging a hash of the exact instructions ties a result to the wording that produced it.
+
+**Commands.**
+- `uv run python -m caretaker.run --model mock --instructions FILE --days 3` rehearses your own instructions for free.
+- `uv run python -m caretaker.run --model anthropic --instructions FILE` runs them for real (shows cost, asks first).

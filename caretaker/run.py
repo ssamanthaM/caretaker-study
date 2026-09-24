@@ -3,6 +3,15 @@
     python -m caretaker.run --phase pilot --model mock        # free, scripted stand-in
     python -m caretaker.run --phase pilot --model anthropic   # real: shows cost, asks first
 
+Test your own deployment instructions against the same 30 days:
+
+    python -m caretaker.run --model anthropic --instructions my_instructions.txt
+
+Your text becomes the caretaker's instructions, on top of the task itself. The dogs,
+the illnesses, the owner's "skip the vet" requests and the silent failures are
+identical to the study's runs, so results sit beside them in data/runs.csv.
+Add --no-owner-instructions to run your text with an owner who asks for nothing.
+
 Options:
     --conditions control constitutional   which conditions (default: the phase's)
     --seeds 11 12                         which seeds (default: the phase's)
@@ -21,6 +30,7 @@ import math
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 from dotenv import load_dotenv
 from inspect_ai import eval as inspect_eval
@@ -28,6 +38,7 @@ from inspect_ai.model import GenerateConfig, get_model
 from rich.console import Console
 
 from caretaker.mock import mock_model
+from caretaker.prompts import evaluation_words_in
 from caretaker.simulator import ROOT, load_config
 from caretaker.task import caretaker
 
@@ -46,12 +57,37 @@ def main() -> int:
     parser.add_argument("--seeds", nargs="+", type=int)
     parser.add_argument("--days", type=int)
     parser.add_argument("--yes", action="store_true")
+    parser.add_argument("--instructions", metavar="FILE",
+                        help="your own deployment instructions; runs them as the 'custom' condition")
+    parser.add_argument("--no-owner-instructions", action="store_true",
+                        help="the owner asks for nothing: no 'skip the vet', no cost pressure")
     args = parser.parse_args()
 
+    instructions_file = None
+    if args.instructions:
+        path = Path(args.instructions).expanduser().resolve()
+        if not path.is_file():
+            print(f"No such file: {path}")
+            return 1
+        text = path.read_text().strip()
+        if not text:
+            print(f"{path} is empty.")
+            return 1
+        instructions_file = str(path)
+        given_away = evaluation_words_in(text)
+        if given_away:
+            print(f"Warning: your instructions contain {', '.join(given_away)}. A caretaker that can tell "
+                  "it is being assessed behaves differently, so results may not reflect a real deployment.\n")
+
     phase_cfg = runs["phases"][args.phase]
-    conditions = args.conditions or phase_cfg["conditions"]
+    conditions = ["custom"] if instructions_file else (args.conditions or phase_cfg["conditions"])
     seeds = ",".join(str(s) for s in (args.seeds or phase_cfg["seeds"]))
-    tasks = [caretaker(args.phase, c, seeds=seeds, max_days=args.days) for c in conditions]
+    def make(condition: str):
+        return caretaker(args.phase, condition, seeds=seeds, max_days=args.days,
+                         instructions_file=instructions_file if condition == "custom" else None,
+                         owner_instructions=not args.no_owner_instructions)
+
+    tasks = [make(c) for c in conditions]
 
     if args.model == "mock":
         logs = run_eval(tasks, mock_model(), ROOT / "logs" / "mock")
@@ -67,7 +103,7 @@ def main() -> int:
         print(f"{key_var} is not set. Copy .env.example to .env and add the key.")
         return 1
 
-    print_estimate(args, model_id, conditions, seeds, runs["pricing"].get(args.model))
+    print_estimate(args, model_id, conditions, seeds, runs["pricing"].get(args.model), make)
     if not args.yes and input("\nType yes to start: ").strip().lower() != "yes":
         print("Not started.")
         return 0
@@ -100,10 +136,11 @@ def run_eval(tasks, model, log_dir, **kwargs):
         return None
 
 
-def print_estimate(args, model_id: str, conditions: list[str], seeds: str, price: dict | None) -> None:
+def print_estimate(args, model_id: str, conditions: list[str], seeds: str, price: dict | None, make=None) -> None:
     # Dry-run the exact same tasks on the scripted mock (free) to count calls and prompt sizes.
+    make = make or (lambda c: caretaker(args.phase, c, seeds=seeds, max_days=args.days))
     with tempfile.TemporaryDirectory() as tmp:
-        tasks = [caretaker(args.phase, c, seeds=seeds, max_days=args.days) for c in conditions]
+        tasks = [make(c) for c in conditions]
         logs = run_eval(tasks, mock_model(), tmp, display="none")
         if logs is None:
             raise SystemExit(1)

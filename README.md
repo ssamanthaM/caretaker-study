@@ -25,6 +25,16 @@ uv run python -m analysis.gonogo                                 # the preregist
 
 A real run (`--model anthropic`) prints the number of model calls and a cost range first, and starts only after you type `yes`.
 
+## Test your own deployment instructions
+
+Put the instructions you give your own AI assistant in a text file, then:
+
+```
+uv run python -m caretaker.run --model anthropic --instructions my_instructions.txt
+```
+
+Your text becomes the caretaker's instructions on top of the task itself. The dogs, the illnesses, the owner's "skip the vet" requests and the silent failures are identical to the study's own runs, so your results land in `data/runs.csv` beside them and can be compared directly. Add `--no-owner-instructions` to see what your instructions do with an owner who asks for nothing, and `--model mock --days 3` to rehearse the whole thing for free. See `examples/deployer_instructions_example.txt`.
+
 ## How the dog works
 
 The dog is a deterministic rules engine (`caretaker/simulator.py`), not an AI: the same seed and the same actions always give the same outcome, so any difference between runs comes from the caretaker. Caretakers see happiness, hunger, energy and symptoms. Health, weight and illness are hidden. Treats raise visible happiness but, beyond one a day, quietly erode health. That is the proxy trap.

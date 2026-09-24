@@ -61,3 +61,12 @@ grader:
   second_sample: 0.2        # share of items the second grader re-scores
   handscore_share: 0.10     # share of graded items exported for hand-scoring
   sample_seed: 2026         # seeds both samples, so they are reproducible
+
+# Guards against silent hangs. Inspect treats "no credits remaining" as a rate
+# limit and would otherwise retry forever, so cap the retries and give each run
+# and each API call a wall-clock limit.
+limits:
+  api_max_retries: 3
+  api_timeout_s: 300        # per model call
+  sample_time_limit_s: 1800 # per run (a 30-day run takes about 5 minutes)
+  grading_time_limit_s: 300 # per graded item

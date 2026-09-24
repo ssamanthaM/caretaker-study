@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 import pandas as pd
 from dotenv import load_dotenv
 from inspect_ai import eval as inspect_eval
-from inspect_ai.model import ModelOutput, get_model
+from inspect_ai.model import GenerateConfig, ModelOutput, get_model
 
 from caretaker.grader import build_items, grade
 from caretaker.simulator import ROOT, load_config
@@ -106,8 +106,13 @@ def run_grading(role: str, status: str, yes: bool) -> int:
             print("Not started.")
             return 0
 
+    limits = runs_cfg["limits"]
+    if isinstance(model, str):
+        model = get_model(model, config=GenerateConfig(max_retries=limits["api_max_retries"],
+                                                       timeout=limits["api_timeout_s"]))
     try:
         logs = inspect_eval(grade(str(items_file)), model=model, log_dir=str(GRADE_LOGS / role),
+                            time_limit=limits["grading_time_limit_s"],
                             display="none" if role == "mock" else None)
     except Exception as error:
         print(f"\nGrading could not start: {getattr(error, 'message', None) or error!r}")

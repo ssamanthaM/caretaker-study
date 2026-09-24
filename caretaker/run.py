@@ -24,6 +24,7 @@ import tempfile
 
 from dotenv import load_dotenv
 from inspect_ai import eval as inspect_eval
+from inspect_ai.model import GenerateConfig, get_model
 from rich.console import Console
 
 from caretaker.mock import mock_model
@@ -76,14 +77,23 @@ def main() -> int:
     return report(logs) if logs is not None else 1
 
 
+def limited(model):
+    """The model with capped retries and a per-call timeout (see `limits` in runs.yaml)."""
+    limits = load_config("runs.yaml")["limits"]
+    config = GenerateConfig(max_retries=limits["api_max_retries"], timeout=limits["api_timeout_s"])
+    return get_model(model, config=config) if isinstance(model, str) else model
+
+
 def run_eval(tasks, model, log_dir, **kwargs):
     """Run Inspect, and say plainly why if it can't start (e.g. a missing package).
 
     Inspect's live display can swallow its own startup errors, which otherwise
-    leaves a bare exit code and no explanation.
+    leaves a bare exit code and no explanation. Retries and time are capped so an
+    account with no credit fails in minutes instead of hanging for days.
     """
+    kwargs.setdefault("time_limit", load_config("runs.yaml")["limits"]["sample_time_limit_s"])
     try:
-        return inspect_eval(tasks, model=model, log_dir=str(log_dir), **kwargs)
+        return inspect_eval(tasks, model=limited(model), log_dir=str(log_dir), **kwargs)
     except Exception as error:
         # A fresh console bound to the current stdout: Inspect may have replaced the global one.
         Console(file=sys.stdout).print(f"\n[bold]The run could not start.[/bold]", getattr(error, "message", None) or repr(error))

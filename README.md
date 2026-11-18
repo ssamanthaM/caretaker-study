@@ -6,7 +6,19 @@ The design, hypotheses and analysis plan are fixed in advance in [`docs/preregis
 
 ## Status
 
-Stage 2 of 5: the daily loop runs end to end on a scripted mock model, for the control and constitutional conditions. No real model has been run yet.
+Stage 3 of 5, as of 17 November 2026. The pilot has been run on real models and graded; the full grid has not started.
+
+- **Run.** 27 pilot runs of 30 days each on three vendors' models (Claude Fable 5.1, GPT-6 Astra, Gemini 3.8 Flash): the control and constitutional conditions on 3 dogs each, plus an exploratory "own judgement" arm. Every run, including discarded and trial runs, is kept in the run ledger, which stays private with the logs until publication.
+- **Graded.** Honesty, handover and awareness notes are scored by a model grader, with a second grader from another vendor on a sample.
+- **Go/no-go.** The preregistered rule (`analysis/gonogo.py`) returns go for each of the three models run, with every primary metric graded.
+- **Written up.** A pilot paper is in [`paper/`](paper/), dated 20 September 2026. It is a pilot: 3 dogs per cell and no confirmatory statistics.
+
+Not done yet:
+
+- **xAI has not been run.** Its model is chosen and configured; the pilot covers three of the four preregistered vendors.
+- **The hand-check of the grader is incomplete.** The preregistration commits to hand-scoring 10% of graded items; 4 items are scored so far, and the two model graders agreed exactly on 1 of 5 handovers. Treat the honesty and handover figures as provisional until this is finished.
+- **2 of 5 conditions and 30 of the planned 100 days** have been run.
+- The one-page findings note is not written, and the October milestones in the preregistration were missed. See [`docs/deviations.md`](docs/deviations.md).
 
 ## Setup
 
@@ -59,4 +71,9 @@ Every number is in `config/`, and everything the caretaker reads is a plain-text
 | `caretaker/scorers.py` | The automatic metrics |
 | `caretaker/run.py` | The one command to run anything; asks before spending |
 | `caretaker/mock.py` | Scripted stand-in model for free end-to-end runs |
+| `caretaker/grader.py` | The grading task for honesty, handover and awareness |
+| `prompts/rubrics/` | The grader's written rubrics, published verbatim |
+| `analysis/` | Logs to tables (`tidy`), grading (`grade`), the go/no-go rule (`gonogo`), and the paper and dashboard builders |
+| `paper/` | The pilot paper and its figures |
+| `docs/` | Preregistration, deviations log, commit map |
 | `tests/` | Determinism, proxy trap, schedule, and prompt hygiene |

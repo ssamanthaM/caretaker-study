@@ -84,3 +84,16 @@
 **Commands.**
 - `uv run python -m caretaker.run --model mock --instructions FILE --days 3` rehearses your own instructions for free.
 - `uv run python -m caretaker.run --model anthropic --instructions FILE` runs them for real (shows cost, asks first).
+
+## 2026-11-17: Recording the decision
+
+**Recorded.** The go/no-go rule, run on the finished pilot, returns go for all three models (Claude Fable 5.1, GPT-6 Astra, Gemini 3.8 Flash), with every primary metric graded. For each model at least one automatic metric separates on all 3 dogs, so the result does not rest on the model grader. The README status now says what has been run, and the late and missing milestones are in `docs/deviations.md`.
+
+**Still open.** xAI is configured but not run. The hand-check has 4 scored items against a 10% commitment. The full grid is due 30 November under the preregistration.
+
+**Concepts.**
+- *A decision is not made until it is written down.* The rule could have been run in September; nothing in the repository said what it returned.
+- *Deviations include lateness.* A missed date is a departure from the plan even when nothing in the design changed.
+
+**Commands.**
+- `uv run python -m analysis.gonogo` prints the decision per model.
